@@ -24,11 +24,12 @@ import org.apache.lucene.util.Version;
 
 public class Indexer {
     
+    private static String INDEX_DIR = "/var/lib/lucene/index1";
     /** Creates a new instance of Indexer */
     public Indexer() {
     }
  
-    public void rebuildIndexes() {
+    public void rebuildIndexes(){
 
         Connection conn = null;
 
@@ -58,8 +59,47 @@ public class Indexer {
          * and place your class source files at src/edu/ucla/cs/cs144/.
 	 * 
 	 */
-
-
+    try{
+        Statement s = conn.createStatement();
+        Directory indexDir = FSDirectory.open(new File(INDEX_DIR));
+        IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_4_10_2, new StandardAnalyzer());
+        IndexWriter indexWriter = new IndexWriter(indexDir, config);
+        
+        ResultSet ItemidDesc = s.executeQuery("Select ItemID, Name, Description From ItemTable");
+        while(ItemidDesc.next()){
+            Document doc = new Document();
+            String ID = ItemidDesc.getString("ItemID");
+            String name = ItemidDesc.getString("Name");
+            String description = ItemidDesc.getString("Description");
+            Statement catS = conn.createStatement();
+            ResultSet category = catS.executeQuery("Select Category From ItemCategory Where ItemID="+ItemidDesc.getString("ItemID"));
+            String allCategories="";
+            while(category.next()){
+                allCategories += category.getString("Category")+" ";
+            }
+            doc.add(new StringField("ID", ID, Field.Store.YES));
+            doc.add(new StringField("Name", name, Field.Store.YES));
+            String content = ID+" "+name+" "+allCategories+description;
+            doc.add(new TextField("Content", content, Field.Store.NO));
+            indexWriter.addDocument(doc);
+            System.out.println("Processed "+ID);
+        }
+        
+        indexWriter.close();
+        
+    } catch (SQLException ex){
+        System.out.println("SQLException caught");
+        System.out.println("---");
+        while ( ex != null ){
+            System.out.println("Message   : " + ex.getMessage());
+            System.out.println("SQLState  : " + ex.getSQLState());
+            System.out.println("ErrorCode : " + ex.getErrorCode());
+            System.out.println("---");
+            ex = ex.getNextException();
+        }
+    } catch (IOException io){
+        System.out.println("I/O Exception");
+    }
         // close the database connection
 	try {
 	    conn.close();
