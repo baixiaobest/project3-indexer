@@ -82,7 +82,7 @@ public class Indexer {
             String content = ID+" "+name+" "+allCategories+description;
             doc.add(new TextField("Content", content, Field.Store.NO));
             indexWriter.addDocument(doc);
-            System.out.println("Processed "+ID);
+            //System.out.println("Processed "+ID);
         }
         
         indexWriter.close();
