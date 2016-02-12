@@ -79,7 +79,7 @@ public class Indexer {
             }
             doc.add(new StringField("ID", ID, Field.Store.YES));
             doc.add(new StringField("Name", name, Field.Store.YES));
-            String content = ID+" "+name+" "+allCategories+description;
+            String content = name+" "+allCategories+description;
             doc.add(new TextField("Content", content, Field.Store.NO));
             indexWriter.addDocument(doc);
             //System.out.println("Processed "+ID);
